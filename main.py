@@ -1,5 +1,3 @@
-# This is a sample Python script.
-
 import os
 from datetime import datetime
 
