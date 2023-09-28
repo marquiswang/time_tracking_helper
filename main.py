@@ -65,8 +65,6 @@ if __name__ == '__main__':
         last_time_entry = get_last_time_entry()
         pushcuts_post(PUSHCUTS_NOT_TRACKING_SHORTCUT, f"Untracked Time",
                       f"{last_time_entry['untracked_duration_formatted']}")
-        print(last_time_entry)
     else:
         pushcuts_post(PUSHCUTS_TRACKING_SHORTCUT, f"Tracking for {current_time_entry['duration_formatted']}",
                       f"{current_time_entry['project_name']} - {current_time_entry['description']}")
-        print(current_time_entry)
