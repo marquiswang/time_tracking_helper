@@ -25,3 +25,6 @@ class TogglTimeEntry:
 
     project_name: str = ""
     duration_delta: timedelta = None
+
+    def __repr__(self) -> str:
+        return self.project_name + ' - ' + self.description
