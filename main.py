@@ -11,7 +11,6 @@ TRACKED_TIME_REMINDER_INTERVALS = dict({
     "Hygiene": (timedelta(minutes=15), timedelta(minutes=5)),
 })
 
-
 import requests
 
 from time_entry import TogglTimeEntry
@@ -45,6 +44,7 @@ def get_current_time_entry() -> TogglTimeEntry:
 
     return time_entry
 
+
 def get_last_time_entry() -> TogglTimeEntry:
     data = toggl_api('time_entries')[0]
     return TogglTimeEntry(**data)
@@ -60,12 +60,14 @@ def pushcuts_post(shortcut, title, text):
                       json={'title': title, 'text': text})
     return r.json()
 
+
 import time
 
 from threading import Timer
 
+
 class NotificationQueue:
-    timer : Timer = Timer(0, lambda: _)
+    timer: Timer = Timer(0, lambda: _)
 
 
 def schedule_new_reminder(last_checked_current_time_entry):
@@ -96,7 +98,7 @@ def schedule_new_reminder(last_checked_current_time_entry):
         if not NotificationQueue.timer.is_alive():
             print(f"Scheduling untracked time notification in {time_to_next_interval} ({next_interval})")
             NotificationQueue.timer = Timer(time_to_next_interval.total_seconds(),
-                      lambda: send_untracked_time_notification(untracked_time))
+                                            lambda: send_untracked_time_notification(untracked_time))
             NotificationQueue.queued = True
             NotificationQueue.timer.start()
     else:
@@ -121,6 +123,7 @@ def schedule_new_reminder(last_checked_current_time_entry):
 
     return current_time_entry
 
+
 def send_untracked_time_notification(untracked_time):
     current_time_entry = get_current_time_entry()
     if current_time_entry is not None:
@@ -140,8 +143,12 @@ def send_tracked_time_notification(time_entry, duration):
                       f"Tracking for {duration}",
                       f"{current_time_entry}")
 
+
 if __name__ == '__main__':
     current_time_entry = None
     while True:
-        current_time_entry = schedule_new_reminder(current_time_entry)
+        try:
+            current_time_entry = schedule_new_reminder(current_time_entry)
+        except Exception as error:
+            print(error)
         time.sleep(CHECK_INTERVAL.total_seconds())
