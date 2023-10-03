@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 
 CHECK_INTERVAL = timedelta(minutes=5)
-UNTRACKED_TIME_REMINDER_INTERVAL = timedelta(minutes=15)
+UNTRACKED_TIME_REMINDER_INTERVAL = timedelta(minutes=10)
 DEFAULT_TRACKED_TIME_REMINDER_INTERVAL = timedelta(minutes=30)
 TRACKED_TIME_REMINDER_INTERVALS = dict({
     "Sleep": (timedelta(hours=8), timedelta(minutes=30)),
