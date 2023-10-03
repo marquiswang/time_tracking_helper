@@ -1,3 +1,4 @@
+import argparse
 import os
 from datetime import datetime, timedelta
 
@@ -10,6 +11,7 @@ TRACKED_TIME_REMINDER_INTERVALS = dict({
     "Relaxation": (timedelta(minutes=15), timedelta(minutes=15)),
     "Hygiene": (timedelta(minutes=15), timedelta(minutes=5)),
 })
+PROJECTS = dict()
 
 import requests
 
@@ -35,12 +37,8 @@ def get_current_time_entry() -> TogglTimeEntry:
 
     time_entry = TogglTimeEntry(**data)
 
-    projects: dict[tuple[int, int], object] = {}
-    for project in get_projects():
-        projects[(project['workspace_id'], project['id'])] = project
-
     key = (data['workspace_id'], data['project_id'])
-    time_entry.project_name = projects[key]['name']
+    time_entry.project_name = PROJECTS[key]['name']
 
     return time_entry
 
@@ -144,7 +142,7 @@ def send_tracked_time_notification(time_entry, duration):
                       f"{current_time_entry}")
 
 
-if __name__ == '__main__':
+def start_reminders():
     current_time_entry = None
     while True:
         try:
@@ -152,3 +150,49 @@ if __name__ == '__main__':
         except Exception as error:
             print(error)
         time.sleep(CHECK_INTERVAL.total_seconds())
+
+
+import statistics
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='Time Tracking Helper',
+        description='Helps track time with Toggl using reminders and smartness')
+
+    parser.add_argument('--start', action='store_true')
+    parser.add_argument('--test', action='store_true')
+
+    args = parser.parse_args()
+
+    for project in get_projects():
+        PROJECTS[(project['workspace_id'], project['id'])] = project
+
+    if args.test:
+        data = toggl_api('time_entries')
+        time_entries = [TogglTimeEntry(**entry) for entry in data]
+
+        time_entry_samples = {}
+        for time_entry in time_entries:
+            if not time_entry.stop:
+                continue
+
+            time_entry.project_name = PROJECTS[(time_entry.workspace_id, time_entry.project_id)]['name']
+            samples = time_entry_samples.setdefault(time_entry.project_name, {'samples':[]})
+            start_time = datetime.fromisoformat(time_entry.start)
+            stop_time = datetime.fromisoformat(time_entry.stop.replace("Z", "+00:00"))
+            duration = stop_time - start_time
+            samples['samples'].append(duration.total_seconds())
+
+        for sample in time_entry_samples.values():
+            samples_ = sample['samples']
+            sample['mean'] = timedelta(seconds=statistics.mean(samples_))
+            sample['median'] = timedelta(seconds=statistics.median(samples_))
+            if len(samples_) > 1:
+                sample['stdev'] = timedelta(seconds=statistics.stdev(samples_))
+            else:
+                sample['stdev'] = timedelta(0)
+
+        print(time_entry_samples)
+
+    if args.start:
+        start_reminders()
